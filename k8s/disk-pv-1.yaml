@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "7e1583f4-1b63-4d4e-9368-5c39153244dd"
+  namespace: kube-system
+spec:
+  capacity:
+    storage: 20Gi
+  storageClassName: disk
+  accessModes:
+    - ReadWriteOnce
+  flexVolume:
+    driver: "ksc/ebs"
+    fsType: "ext4"
+    options:
+      volumeId: "7e1583f4-1b63-4d4e-9368-5c39153244dd"
