@@ -4,8 +4,6 @@
 
 
 ![金山云容器引擎服务架构示意图](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/kce-architecture.png)
-界面参数具体描述如下：
-
 
 本指南包含如下内容：
 * 准备网络环境
