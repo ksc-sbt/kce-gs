@@ -1,0 +1,21 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      run: nginx-app
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        run: nginx-app
+    spec:
+      containers:
+      - name: nginx
+        image: hub.kce.ksyun.com/ksc-gs/nginx:latest
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+        - name: gs-registry-key
