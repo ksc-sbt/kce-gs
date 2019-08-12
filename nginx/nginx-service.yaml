@@ -9,7 +9,6 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30062
   type: LoadBalancer
   selector:
      run: nginx-app
