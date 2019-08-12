@@ -14,7 +14,6 @@
 * 部署基于EFK的容器日志服务
 
 
-
 # 1 网络环境
 本指南所使用的环境位于金山云北京6区。下面是在使用金山云容器引擎服务所需要准备的网络配置信息。
 
@@ -58,7 +57,10 @@
 
 在完成密码重置后，可执行docker login命令完成金山云镜像仓库认证。下述命令中，XXXXXXXX替换为对应的账户ID。
 ```bash
-michaeldembp-2:~ myang$ docker login hub.kce.ksyun.com -u XXXXXXXX
+docker login hub.kce.ksyun.com -u XXXXXXXX
+```
+该命令输出提示输入Password，在输入前面设置的镜像仓库登录口令后，显示login成功。
+```text
 Password: 
 Login Succeeded
 ```
@@ -66,7 +68,10 @@ Login Succeeded
 
 通过docker push命令，可完成docker镜像上传。为了简单起见，重用docker.hub上的标准nginx镜像。首先执行docker pull命令下载标准nginx镜像。
 ```bash
-michaeldembp-2:~ myang$ docker pull nginx
+docker pull nginx
+```
+命令输出为：
+```text
 Using default tag: latest
 latest: Pulling from library/nginx
 f5d23c7fed46: Pull complete 
@@ -77,7 +82,10 @@ Status: Downloaded newer image for nginx:latest
 ```
 然后执行docker images命令查看本地的镜像信息。
 ```bash
-michaeldembp-2:~ myang$ docker images
+docker images
+```
+命令输出为：
+```text
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 nginx               latest              e445ab08b2be        2 weeks ago         126MB
 ```
@@ -86,15 +94,22 @@ nginx               latest              e445ab08b2be        2 weeks ago         
 
 修改镜像tag，该tag包含金山云镜像注册服务器地址信息。
 ```bash
-michaeldembp-2:~ myang$ docker tag e445ab08b2be  hub.kce.ksyun.com/ksc-gs/nginx:latest
-michaeldembp-2:~ myang$ docker images
+docker tag e445ab08b2be  hub.kce.ksyun.com/ksc-gs/nginx:latest
+docker images
+```
+命令输出为：
+```text
 REPOSITORY                       TAG                 IMAGE ID            CREATED             SIZE
 nginx                            latest              e445ab08b2be        2 weeks ago         126MB
 hub.kce.ksyun.com/ksc-gs/nginx   latest              e445ab08b2be        2 weeks ago         126MB
+```
 
 执行docker push命令，把镜像上传到hub.kce.ksyun.com镜像仓库。
 ```bash
-michaeldembp-2:~ myang$ docker push hub.kce.ksyun.com/ksc-gs/nginx:latest
+docker push hub.kce.ksyun.com/ksc-gs/nginx:latest
+```
+命令输出为：
+```text
 The push refers to a repository [hub.kce.ksyun.com/ksc-gs/nginx]
 fe6a7a3b3f27: Pushed 
 d0673244f7d4: Pushed 
@@ -134,17 +149,19 @@ latest: digest: sha256:dc85890ba9763fe38b178b337d4ccc802874afe3c02e6c98c304f65b0
 最后一步是配置容器Node节点的其他信息。
 ![金山云容器集群Node节点配置](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-host-key.png)
 具体的配置参数信息如下：
-** 所属项目：选择资源所属的项目，可选择"缺省项目"；
-** 服务器名称：输入容器集群Node节点的名字；
-** 登录方式：容器集群的Node节点可以通过ssh登录，可以设置登录的密码或者密钥文件。容器集群的Master节点是不允许ssh登录的。
+* 所属项目：选择资源所属的项目，可选择"缺省项目"；
+* 服务器名称：输入容器集群Node节点的名字；
+* 登录方式：容器集群的Node节点可以通过ssh登录，可以设置登录的密码或者密钥文件。容器集群的Master节点是不允许ssh登录的。
 
 ## 3.4 验证集群创建结果
 集群实例的创建过程大约5分钟，在创建完成后，能看到如下集群的详细信息。
 ![金山云容器集群详细信息](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-detail.png)
 通过跳板机（处于同一个VPC，并关联一个弹性IP的云服务器），利用ssh密钥，可登录到集群的节点服务器(10.34.0.10)上。执行fdisk命令能查看该集群节点挂载的块设备，其中/dev/vdb就是添加的本地数据盘，该数据盘挂载在/data目录下。
 ```bash
-root@vm10-34-0-10 ~]# fdisk -l
-
+fdisk -l
+```
+命令输出为：
+```text
 Disk /dev/vda: 21.5 GB, 21474836480 bytes, 41943040 sectors
 Units = sectors of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes
@@ -167,11 +184,13 @@ tmpfs                497     1       497   1% /dev/shm
 tmpfs                497     7       490   2% /run
 tmpfs                497     0       497   0% /sys/fs/cgroup
 /dev/vdb            9952   505      8920   6% /data
-
 ```
 执行docker ps命令，能看到在该服务上运行的容器实例。
 ```bash
-[root@vm10-34-0-10 ~]# docker ps
+docker ps
+```
+命令输出为：
+```text
 CONTAINER ID        IMAGE                                          COMMAND                  CREATED             STATUS              PORTS               NAMES
 d955143d471b        hub.kce.ksyun.com/ksyun/traefik                "/traefik --api --ku…"   10 minutes ago      Up 10 minutes                           k8s_traefik-ingress-lb_traefik-ingress-controller-h695d_kube-system_018c6e60-bce4-11e9-881e-fa163e63dc05_0
 a021c4d3bfcb        hub.kce.ksyun.com/ksyun/metrics-server-amd64   "/metrics-server --m…"   10 minutes ago      Up 10 minutes                           k8s_metrics-server_metrics-server-5ff7ffc54-kl8j5_kube-system_fddea69d-bce3-11e9-881e-fa163e63dc05_0
@@ -192,25 +211,32 @@ e942508f1bf5        hub.kce.ksyun.com/ksyun/pause-amd64:3.0        "/pause"     
 ## 3.5 利用kubectl客户端访问集群
 通过金山云容器引擎服务创建的Kubernetes集群实例可以通过公网访问。因此，需要在能访问公网的机器上下载Kubernetes客户端kubectl。由于我们选择的Kubernetes版本是1.13.4，因此安装kubectl版本尽可能是1.13.4。
 ```bash
-michaeldembp-2:~ myang$ kubectl version --client
+kubectl version --client
+```
+命令输出为：
+```text
 Client Version: version.Info{Major:"1", Minor:"13", GitVersion:"v1.13.4", GitCommit:"c27b913fddd1a6c480c229191a087698aa92f0b1", GitTreeState:"clean", BuildDate:"2019-03-01T23:34:27Z", GoVersion:"go1.12", Compiler:"gc", Platform:"darwin/amd64"}
-michaeldembp-2:~ myang$ 
 ```
 通过金山云控制台，在所创建实例信息处点击"配置文件"下载集群的配置文件，并存储在客户端home目录下的.kube目录下。
 
 ![金山云容器集群配置文件](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-config.png)
 下面是.kube目录下的config文件。
 ```bash
-michaeldembp-2:.kube myang$ ls -al ~/.kube 
+michaeldembp-2:.kube myang$ ls -al ~/.kube
+```
+命令输出为：
+```text
 total 16
 drwxr-xr-x    3 myang  staff    96 Aug 12 18:23 .
 drwxr-xr-x+ 186 myang  staff  5952 Aug 12 18:23 ..
 -rw-r--r--@   1 myang  staff  5593 Aug 12 18:22 config
-michaeldembp-2:.kube myang$ 
 ```
 然后执行kubectl cluster-info命令，能看到当前集群的信息。
 ```bash
-michaeldembp-2:.kube myang$ kubectl cluster-info
+kubectl cluster-info
+```
+命令输出为：
+```text
 Kubernetes master is running at https://120.92.43.65:6443
 CoreDNS is running at https://120.92.43.65:6443/api/v1/namespaces/kube-system/services/coredns:dns/proxy
 Heapster is running at https://120.92.43.65:6443/api/v1/namespaces/kube-system/services/heapster/proxy
@@ -218,22 +244,30 @@ monitoring-influxdb is running at https://120.92.43.65:6443/api/v1/namespaces/ku
 ```
 通过kubect get nodes获得集群的节点信息。
 ```bash
-michaeldembp-2:.kube myang$ kubectl get nodes -o wide
+kubectl get nodes -o wide
+```
+命令输出为：
+```text
 NAME         STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                KERNEL-VERSION          CONTAINER-RUNTIME
 10.34.0.10   Ready    node     57m   v1.13.4   10.34.0.10    <none>        CentOS Linux 7 (Core)   3.10.0-514.el7.x86_64   docker://18.9.2
 10.34.0.11   Ready    master   57m   v1.13.4   10.34.0.11    <none>        CentOS Linux 7 (Core)   3.10.0-514.el7.x86_64   docker://18.9.2
 10.34.0.16   Ready    master   57m   v1.13.4   10.34.0.16    <none>        CentOS Linux 7 (Core)   3.10.0-514.el7.x86_64   docker://18.9.2
 10.34.0.6    Ready    master   57m   v1.13.4   10.34.0.6     <none>        CentOS Linux 7 (Core)   3.10.0-514.el7.x86_64   docker://18.9.2
-michaeldembp-2:.kube myang$
 ```
 在本机器运行kubectl proxy命令启动Proxy server，把在访问本机的请求转发到Kubernetes API Server。
 ```bash
-michaeldembp-2:~ myang$ kubectl proxy
+kubectl proxy
+```
+命令输出为：
+```text
 Starting to serve on 127.0.0.1:8001
 ```
-然后执行如下命令，能获得当前集群的版本信息。
+然后在另一个命令行窗口执行如下命令，能获得当前集群的版本信息。
 ```bash
-okmichaeldembp-2:~ myang$ curl 127.0.0.1:8001/version
+curl 127.0.0.1:8001/version
+```
+命令输出为：
+```text
 {
   "major": "1",
   "minor": "13",
@@ -247,13 +281,18 @@ okmichaeldembp-2:~ myang$ curl 127.0.0.1:8001/version
 }
 ```
 # 4. 部署Nginx应用
-本节介绍如何在新创建的集群上部署一个简单Nginx应用，并提供通过公网地址访问。
+本节介绍如何在新创建的集群上部署一个简单Nginx应用，并可通过公网地址访问。
 ## 4.1 创建Namespace
 为了管理方便，新建一个Namespace（名字为nginx-app)来管理与该应用相关的资源。
 ```bash
 michaeldembp-2:~ myang$ kubectl create namespace nginx-app
-namespace/nginx-app created
-michaeldembp-2:~ myang$ kubectl get namespaces
+```
+然后执行kubectl get namespaces获得新建的Namespace。
+```bash
+kubectl get namespaces
+```
+命令输出为：
+```text
 NAME          STATUS   AGE
 default       Active   76m
 kube-public   Active   76m
@@ -263,9 +302,15 @@ nginx-app     Active   7s
 ## 4.2 创建secret对象
 由于nginx镜像是存储在金山云镜像仓库中的私有镜像，在pull镜像时需要用户名和口令，因此创建一个secret对象，其中命令中的"XXXXXXXX"需要替换为在"2.1 重置镜像仓库登录密码"中重置的密码。
 ```bash
-michaeldembp-2:~ myang$ kubectl create secret docker-registry gs-registry-key --docker-server=hub.kce.ksyun.com --docker-username=73403251 --docker-password=XXXXXXXX --docker-email=obsicn@hotmail.com -n nginx-app
+kubectl create secret docker-registry gs-registry-key --docker-server=hub.kce.ksyun.com --docker-username=73403251 --docker-password=XXXXXXXX --docker-email=obsicn@hotmail.com -n nginx-app
 secret/gs-registry-key created
-michaeldembp-2:~ myang$ kubectl get secrets -n nginx-app
+```
+获得新创建的secret对象。
+```bash
+kubectl get secrets -n nginx-app
+```
+命令输出为：
+```text
 NAME                  TYPE                                  DATA   AGE
 default-token-bxbdd   kubernetes.io/service-account-token   3      4m9s
 gs-registry-key       kubernetes.io/dockerconfigjson        1      45s
@@ -273,7 +318,7 @@ ksyunregistrykey      kubernetes.io/dockerconfigjson        1      4m7s
 ```
 ## 4.3 创建Deployment，同时创建Pods
 
-编辑yaml文件如下：
+编辑nginx-deployment.yaml文件如下。其中image参数指定了需要获取的Docker镜像地址，imagePullSecrets参数指定了前一步创建的secret对象。
 ```yaml
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -297,3 +342,66 @@ spec:
       imagePullSecrets:
         - name: gs-registry-key
 ```
+通过执行kubectl apply命令完成Deployment对象的创建，同时创建了两个Pod对象（因为replicas值为2）。
+```bash
+michaeldembp-2:kce-gs myang$ kubectl get deployments -n nginx-app -o wide
+```
+命令输出为：
+```text
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                  SELECTOR
+nginx-deployment   2/2     2            2           71s   nginx        hub.kce.ksyun.com/ksc-gs/nginx:latest   run=nginx-app
+```
+```bash
+kubectl get pods -n nginx-app -o wide -L run
+```
+命令输出为：
+```text
+NAME                                READY   STATUS    RESTARTS   AGE     IP          NODE         NOMINATED NODE   READINESS GATES   RUN
+nginx-deployment-857bc75d4d-bxn2p   1/1     Running   0          9m30s   10.0.1.13   10.34.0.10   <none>           <none>            nginx-app
+nginx-deployment-857bc75d4d-qkddf   1/1     Running   0          9m30s   10.0.1.14   10.34.0.10   <none>           <none>            nginx-app
+```
+在显示的Pod信息可以看到两个Pod的Run Label设置为"nginx-app"，该Label将在后续创建Service对象时用到。
+kubectl port-forward命令可在本地启动一个Proxy，把针对本地的请求forward给Pod。
+```bash
+kubectl port-forward pod/nginx-deployment-857bc75d4d-bxn2p 8888:80 -n nginx-app
+```
+命令输出为：
+```text
+Forwarding from 127.0.0.1:8888 -> 80
+Forwarding from [::1]:8888 -> 80
+```
+然后在另一个命令行窗口中访问127.0.0.1:8888，可发现Pod能正常提供服务。
+```bash
+curl -I 127.0.0.1:8888
+```
+命令输出为：
+```text
+HTTP/1.1 200 OK
+Server: nginx/1.17.2
+Date: Mon, 12 Aug 2019 15:11:08 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Tue, 23 Jul 2019 11:45:37 GMT
+Connection: keep-alive
+ETag: "5d36f361-264"
+Accept-Ranges: bytes
+```
+## 4.4 创建Kubernetes Service对象，通过公网访问Nginx服务
+首先编辑nginx-service.yaml文件如下。
+```yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginx-service
+  labels:
+    run: nginx-app
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+  selector:
+     run: nginx-app
+```
+其中type为LoadBalancer，将创建一个负载均衡器，同时会创建一个Listener，该Listener的侦听端口为80（port: 80), 后端服务器的端口也是80(targetPort: 80)。此外，selector的配置为"run: nginx-app"，也就是说把请求转发给Label为"run: nginx-app"的Pod上。
