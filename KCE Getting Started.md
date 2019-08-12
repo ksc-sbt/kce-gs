@@ -342,7 +342,12 @@ spec:
       imagePullSecrets:
         - name: gs-registry-key
 ```
-通过执行kubectl apply命令完成Deployment对象的创建，同时创建了两个Pod对象（因为replicas值为2）。
+通过执行kubectl apply命令完成Deployment对象的创建。
+```bash
+kubectl apply -f https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/nginx/nginx-deployment.yaml -n nginx-app
+```
+
+获得新创建的deployment对象信息。
 ```bash
 michaeldembp-2:kce-gs myang$ kubectl get deployments -n nginx-app -o wide
 ```
@@ -351,6 +356,7 @@ michaeldembp-2:kce-gs myang$ kubectl get deployments -n nginx-app -o wide
 NAME               READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                  SELECTOR
 nginx-deployment   2/2     2            2           71s   nginx        hub.kce.ksyun.com/ksc-gs/nginx:latest   run=nginx-app
 ```
+获得新创建的Pod对象（因为replicas值为2，所以会创建两个Pod对象）。
 ```bash
 kubectl get pods -n nginx-app -o wide -L run
 ```
@@ -405,3 +411,38 @@ spec:
      run: nginx-app
 ```
 其中type为LoadBalancer，将创建一个负载均衡器，同时会创建一个Listener，该Listener的侦听端口为80（port: 80), 后端服务器的端口也是80(targetPort: 80)。此外，selector的配置为"run: nginx-app"，也就是说把请求转发给Label为"run: nginx-app"的Pod上。
+执行如下命令将完成Service对象创建。
+```bash
+kubectl apply -f https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/nginx/nginx-service.yaml -n nginx-app
+```
+执行如下命令获得新创建的Service对象信息。
+```bash
+kubectl get services -o wide -n nginx-app
+```
+命令输出信息如下：
+```text
+NAME            TYPE           CLUSTER-IP       EXTERNAL-IP    PORT(S)        AGE   SELECTOR
+nginx-service   LoadBalancer   10.254.213.197   120.92.79.86   80:30244/TCP   97s   run=nginx-app
+```
+其中120.92.79.86是公网访问地址，通过执行如下命令验证Nginx服务可以通过外网访问。
+```bash
+curl  -I 120.92.79.86 
+```
+命令输出信息如下：
+```text
+HTTP/1.1 200 OK
+Server: nginx/1.17.2
+Date: Mon, 12 Aug 2019 15:53:07 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Tue, 23 Jul 2019 11:45:37 GMT
+Connection: keep-alive
+ETag: "5d36f361-264"
+Accept-Ranges: bytes
+```
+此时访问金山云控制台，能看到创建Kubernetes Service对象nginx-service时创建的负载均衡实例和监听器信息。
+
+![负载均衡实例信息](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/slb-listener.png)
+
+## 4.4 增加Kubernetes集群节点
+当需要增加Kubernetes集群实例计算能力时，可增加和删除集群节点。
