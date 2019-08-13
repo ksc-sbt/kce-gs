@@ -129,6 +129,7 @@ latest: digest: sha256:dc85890ba9763fe38b178b337d4ccc802874afe3c02e6c98c304f65b0
 ## 3.1 配置Kubernetes集群实例网络
 在金山云容器引擎管理控制台，点击"新建虚拟机集群"后的第一步就是配置集群网络。
 ![金山云容器集群网络配置](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-network.png)
+
 下面是网络配置的参数说明：
 * 集群网络：选择该集群所处的VPC。
 * 终端子网：当集群外的云主机需要访问集群中Pod提供的服务时，需要创建一个Kubernetes Service，该Servie的Type是LoadBalancer，而且配置Service的annotations为service.beta.kubernetes.io/ksc-loadbalancer-type: "internal"。在创建Service时，将创建一个金山云内网负载均衡器。由于金山云内网负载均衡实例是创建在终端子网，因此集群的网络配置需要指定终端子网。
@@ -138,8 +139,8 @@ latest: digest: sha256:dc85890ba9763fe38b178b337d4ccc802874afe3c02e6c98c304f65b0
 ## 3.2 配置集群云服务器
 配置集群云服务器明确了集群中Node节点配置信息。
 ![金山云容器集群云服务器配置](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-host.png)
-具体的配置参数信息如下：
 
+具体的配置参数信息如下：
 * 计费方式：可选择"按小时配置实时计费"和"按日配置计费"两种计费方式。金山云云服务器"按日配置计费"的价格约为"按小时配置实时计费"价格的一半。
 * 节点网络：选择集群主机（包括Master和Node)节点所处的子网；
 * 镜像：选择镜像类型，当前金山云支持CentOS和Ubuntu两种操作系统作为容器集群的节点操作系统；
@@ -149,6 +150,7 @@ latest: digest: sha256:dc85890ba9763fe38b178b337d4ccc802874afe3c02e6c98c304f65b0
 ## 3.3 配置节点
 最后一步是配置容器Node节点的其他信息。
 ![金山云容器集群Node节点配置](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-host-key.png)
+
 具体的配置参数信息如下：
 * 所属项目：选择资源所属的项目，可选择"缺省项目"；
 * 服务器名称：输入容器集群Node节点的名字；
@@ -157,7 +159,8 @@ latest: digest: sha256:dc85890ba9763fe38b178b337d4ccc802874afe3c02e6c98c304f65b0
 ## 3.4 验证集群创建结果
 集群实例的创建过程大约5分钟，在创建完成后，能看到如下集群的详细信息。
 ![金山云容器集群详细信息](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-detail.png)
-通过跳板机（处于同一个VPC，并关联一个弹性IP的云服务器），利用ssh密钥，可登录到集群的节点服务器(10.34.0.10)上。执行fdisk命令能查看该集群节点挂载的块设备，其中/dev/vdb就是添加的本地数据盘，该数据盘挂载在/data目录下。
+
+通过跳板机（处于同一个VPC，并关联一个弹性IP的云服务器），利用ssh密钥，可登录到集群的节点服务器(10.34.0.10)上。执行fdisk命令能查看该集群节点挂载的块设备，其中/dev/vdb就是添加的本地数据盘。
 ```bash
 fdisk -l
 ```
@@ -177,7 +180,13 @@ Disk /dev/vdb: 10.7 GB, 10737418240 bytes, 20971520 sectors
 Units = sectors of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes
 I/O size (minimum/optimal): 512 bytes / 512 bytes
-[root@vm10-34-0-10 ~]# df -m
+```
+执行df -m, 能看到/dev/vdb数据盘挂载在/data目录下。
+```bash
+df -m
+```
+命令输出为：
+```text
 Filesystem     1M-blocks  Used Available Use% Mounted on
 /dev/vda1          20030  2949     16042  16% /
 devtmpfs             488     0       488   0% /dev
@@ -219,7 +228,7 @@ kubectl MacOS版本下载地址：
 https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/darwin/amd64/kubectl
 
 kubectl Windows版本下载地址：
-https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/windows/amd64/kubectl.exe
+https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/windows/amd64/kubectl.exe
 
 在安装完成后，可通过如下命令查看kubectl版本信息。
 ```bash
@@ -232,6 +241,7 @@ Client Version: version.Info{Major:"1", Minor:"13", GitVersion:"v1.13.4", GitCom
 通过金山云控制台，在所创建实例信息处点击"配置文件"下载集群的配置文件，并存储在客户端home目录下的.kube目录下。
 
 ![金山云容器集群配置文件](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-config.png)
+
 下面是.kube目录下的config文件。
 ```bash
 ls -al ~/.kube
