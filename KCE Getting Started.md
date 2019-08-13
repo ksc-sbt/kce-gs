@@ -4,7 +4,6 @@
 
 部署架构参考如下：
 
-
 ![金山云容器引擎服务架构示意图](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/kce-architecture.png)
 
 本指南包含如下内容：
@@ -13,6 +12,7 @@
 * 创建Kubernetes容器引擎
 * 部署Nginx应用
 * 部署Kubernetes仪表盘
+相关Kubernetes对象配置文件存储在Github: https://github.com/ksc-sbt/kce-gs.
 
 
 # 1 准备网络环境
