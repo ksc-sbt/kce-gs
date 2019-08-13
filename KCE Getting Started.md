@@ -471,7 +471,7 @@ Accept-Ranges: bytes
 
 ## 5.1 创建Dashboard相关对象
 部署Kubernetes Dashboard通常基于github的指南，并推荐采用该yaml文件https://github.com/kubernetes/dashboard/blob/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml。
-但该部署配置文件有如下两个问题：
+但该部署配置文件有如下三个问题：
 * 和ServiceAccount对象kubernetes-dashboard绑定的权限不够，导致在Dashboard中某些对象不能访问；
 * Dashboard容器镜像地址是k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.1，该地址访问有时不畅。
 针对上述两个问题，对yaml文件进行如下修改：
