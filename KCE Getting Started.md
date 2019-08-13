@@ -475,8 +475,10 @@ Accept-Ranges: bytes
 * 和ServiceAccount对象kubernetes-dashboard绑定的权限不够，导致在Dashboard中某些对象不能访问；
 * Dashboard容器镜像地址是k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.1，该地址访问有时不畅。
 针对上述两个问题，对yaml文件进行如下修改：
-* 给kubernetes-dashboard绑定cluster-admin ClusterRole；
 * 创建的Dashboard Service只能集群内访问。
+
+下面针对上述三个问题对Dashboard进行相应修改。
+* 给kubernetes-dashboard绑定cluster-admin ClusterRole。
 ```yaml
 # -------------------  Role Binding ------------------- #
 
