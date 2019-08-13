@@ -1,4 +1,4 @@
-本入门指南介绍如何利用金山云容器引擎服务快速搭建Kubernetes集群，并部署一个Nginx应用的过程。同时介绍如何快速搭建和配置仪表盘服务和基于EFK的日志服务。
+本入门指南介绍如何利用金山云容器引擎服务快速搭建Kubernetes集群，并部署一个Nginx应用和Kubernetes Dashboard服务的过程。
 
 部署架构参考如下：
 
@@ -11,7 +11,6 @@
 * 创建Kubernetes容器引擎
 * 部署Nginx应用
 * 部署Kubernetes仪表盘服务
-* 部署基于EFK的容器日志服务
 
 
 # 1 网络环境
@@ -25,11 +24,11 @@
 
 ## 1.2 子网配置信息
 
-|  子网名称   | 所属VPC |可用区 | 子网类型  | CIDR  | 说明|
+| 子网名称 | 所属VPC |可用区 | 子网类型  | CIDR  | 说明|
 |  ----  | ----  | ----  |----  |----  |----|
 | public_a  | gs-vpc |	可用区A | 普通子网| 10.34.51.0/24|用于跳板机|
 | private_a  | gs-vpc |	可用区A | 普通子网| 10.34.0.0/20|用于K8S集群主机和其他云服务器|
-| endpoint  | gs-vpc |	 | 终端子网| 10.34.52.0/24|用于管理内网负载均衡器实例|
+| endpoint  | gs-vpc |无需设置| 终端子网| 10.34.52.0/24|用于管理内网负载均衡器实例|
 
 ## 1.3 安全组配置信息
 在创建K8S集群实例时，需要为集群的Node节点主机关联安全组。下面是安全组(k8s-sg)的配置规则：
@@ -64,7 +63,7 @@ docker login hub.kce.ksyun.com -u XXXXXXXX
 Password: 
 Login Succeeded
 ```
-##2.2	上传自定义镜像
+## 2.2 上传自定义镜像
 
 通过docker push命令，可完成docker镜像上传。为了简单起见，重用docker.hub上的标准nginx镜像。首先执行docker pull命令下载标准nginx镜像。
 ```bash
@@ -210,6 +209,17 @@ e942508f1bf5        hub.kce.ksyun.com/ksyun/pause-amd64:3.0        "/pause"     
 ```
 ## 3.5 利用kubectl客户端访问集群
 通过金山云容器引擎服务创建的Kubernetes集群实例可以通过公网访问。因此，需要在能访问公网的机器上下载Kubernetes客户端kubectl。由于我们选择的Kubernetes版本是1.13.4，因此安装kubectl版本尽可能是1.13.4。
+
+kubectl Linux版本下载地址：
+https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl
+
+kubectl MacOS版本下载地址：
+https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/darwin/amd64/kubectl
+
+kubectl Windows版本下载地址：
+https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/windows/amd64/kubectl.exe
+
+在安装完成后，可通过如下命令查看kubectl版本信息。
 ```bash
 kubectl version --client
 ```
@@ -222,7 +232,7 @@ Client Version: version.Info{Major:"1", Minor:"13", GitVersion:"v1.13.4", GitCom
 ![金山云容器集群配置文件](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/cluster-config.png)
 下面是.kube目录下的config文件。
 ```bash
-michaeldembp-2:.kube myang$ ls -al ~/.kube
+ls -al ~/.kube
 ```
 命令输出为：
 ```text
@@ -444,5 +454,144 @@ Accept-Ranges: bytes
 
 ![负载均衡实例信息](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/slb-listener.png)
 
-## 4.4 增加Kubernetes集群节点
-当需要增加Kubernetes集群实例计算能力时，可增加和删除集群节点。
+
+# 5 部署Kubernetes仪表盘服务
+
+## 5.1 创建Dashboard相关对象
+部署Kubernetes Dashboard通常基于github的指南，并推荐采用该yaml文件https://github.com/kubernetes/dashboard/blob/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml。
+但该部署配置文件有如下两个问题：
+* 和ServiceAccount对象kubernetes-dashboard绑定的权限不够，导致在Dashboard中某些对象不能访问；
+* Dashboard容器镜像地址是k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.1，该地址访问有时不畅。
+针对上述两个问题，对yaml文件进行如下修改：
+* 给kubernetes-dashboard绑定cluster-admin ClusterRole；
+* 创建的Dashboard Service只能集群内访问。
+```yaml
+# -------------------  Role Binding ------------------- #
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-dashboard-admin
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kubernetes-dashboard
+  namespace: kube-system
+```
+* 修改Dashboard容器镜像地址为金山云镜像仓库中对应镜像的支持。
+```yaml
+      containers:
+      - name: kubernetes-dashboard
+        image: hub.kce.ksyun.com/kubernetes-google/kubernetes-dashboard-amd64:v1.10.1
+        ports:
+        - containerPort: 8443
+          protocol: TCP
+```
+* Service类型从缺省的ClusterIP修改为LoadBalancer。
+```yaml
+# ------------------- Dashboard Service ------------------- #
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 443
+      targetPort: 8443
+  selector:
+    k8s-app: kubernetes-dashboard
+```
+执行如下命令创建Dashboard相关对象。
+```bash
+kubectl apply -f https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/dashboard/kubernetes-dashboard.yaml
+```
+命令输出为：
+```text
+secret/kubernetes-dashboard-certs created
+serviceaccount/kubernetes-dashboard created
+clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
+deployment.apps/kubernetes-dashboard created
+service/kubernetes-dashboard created
+```
+执行如下命令查看Service信息：
+```bash
+kubectl get services -n kube-system
+```
+命令输出为：
+```text
+NAME                      TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                   AGE
+coredns                   ClusterIP      10.254.0.10      <none>           53/UDP,53/TCP,9153/TCP    16h
+heapster                  ClusterIP      10.254.150.172   <none>           80/TCP                    16h
+kubernetes-dashboard      LoadBalancer   10.254.172.103   120.92.209.133   443:32400/TCP             51s
+metrics-server            ClusterIP      10.254.67.107    <none>           443/TCP                   16h
+monitoring-influxdb       ClusterIP      10.254.190.9     <none>           8086/TCP                  16h
+traefik-ingress-service   ClusterIP      10.254.208.103   <none>           80/TCP,443/TCP,8080/TCP   16h
+```
+通过Service对象kubernetes-dashboard可获得Kubernetes Dashboard的访问地址是：https://120.92.209.133/。
+
+## 5.2 获得访问Dashboard的Token
+在创建Dashboard相关对象时，会创建一个类型为kubernetes.io/service-account-token的Secret。首先执行如下命令列出Secret。
+```bash
+kubectl get secrets -n kube-system
+```
+命令输出为：
+```text
+NAME                                     TYPE                                  DATA   AGE
+cluster-autoscaler-token-lcrhd           kubernetes.io/service-account-token   3      16h
+coredns-token-b8swl                      kubernetes.io/service-account-token   3      16h
+default-token-cgzxq                      kubernetes.io/service-account-token   3      16h
+flannel-token-v27jn                      kubernetes.io/service-account-token   3      16h
+heapster-token-rjxv4                     kubernetes.io/service-account-token   3      16h
+ksyunregistrykey                         kubernetes.io/dockerconfigjson        1      16h
+kube-proxy-token-7cr7z                   kubernetes.io/service-account-token   3      16h
+kubernetes-dashboard-certs               Opaque                                0      6m11s
+kubernetes-dashboard-key-holder          Opaque                                2      10m
+kubernetes-dashboard-token-5qk86         kubernetes.io/service-account-token   3      6m11s
+metrics-server-token-99282               kubernetes.io/service-account-token   3      16h
+traefik-ingress-controller-token-frfmz   kubernetes.io/service-account-token   3      16h
+```
+其中"kubernetes-dashboard-token-5qk86" Secret对象中存储了Token。通过如下命令获得token信息。
+```bash
+kubectl describe secret/kubernetes-dashboard-token-5qk86 -n kube-system
+```
+命令输出为：
+```text
+Name:         kubernetes-dashboard-token-5qk86
+Namespace:    kube-system
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: kubernetes-dashboard
+              kubernetes.io/service-account.uid: 809eb749-bd6f-11e9-94cc-fa163e09c4bc
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1029 bytes
+namespace:  11 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC10b2tlbi01cWs4NiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjgwOWViNzQ5LWJkNmYtMTFlOS05NGNjLWZhMTYzZTA5YzRiYyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWRhc2hib2FyZCJ9.jwER9T9_s3OgxJLE5l-fYdWTHFpmxcthJVpIjfg-LMBj0XsT0JYumMZgnh5drM3ulq9HtQ7buR7UjR6meHEMjHLVekNOlop6trbGflc3Js7pGuakz6zjqmv8oWKwa4zSZvGZkrLOLgBDTrPGv157A77Pc8QxXnKrdQYwTabLVsrrdP7Ln0ykpuvweucelhu15gn7ImR8CZUmyy03DCshlVXDOlvEGR1I4SLPgtVE3kJ1Gq22-5UpVhnXhiB8pMb7UCU2BuWlALmMB5UEipwDF4hpjoVBArtndzlQPK2eZ8-KZ-ingZEh0eN8nMi497lxkCjBbXeYSFHkkjgMsLW-6A
+```
+其中token字段后面的值就是访问Dashboard的Token。
+
+## 5.3 通过浏览器访问Dashboard
+通过浏览器访问地址https://120.92.209.133/，在忽略一些安全告警信息后，进入如下界面：
+![Dashboar登录](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/dashboard-login.png)
+在"Enter token"处输入"5.2 获得访问Dashboard的Token"获得的Token信息，进入Dashboard界面。
+![Dashboar登录](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/dashboard-main.png)
+
+# 6 小结
+本文介绍了如何利用金山云容器引擎服务管理容器镜像和Kubernetes集群，并部署一个简单的Nginx应用和标准仪表盘的过程。金山云容器引擎服务不仅仅简化Kubernetes集群的安装和管理，还可以和金山云其它IaaS（云主机、云硬盘、负载均衡等）和PaaS服务整合，为客户提供了高弹性、高安全、易管理并按量计费的应用支持平台。
+
+# 7 参考资料
+* 金山云容器引擎产品介绍：https://www.ksyun.com/post/product/KCE
+* 金山云容器引擎产品帮助：https://docs.ksyun.com/products/46
+
+
