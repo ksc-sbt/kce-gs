@@ -1,3 +1,5 @@
+# 金山云容器引擎服务入门指南
+
 本入门指南介绍如何利用金山云容器引擎服务快速搭建Kubernetes集群，并部署一个Nginx应用和Kubernetes Dashboard服务的过程。
 
 部署架构参考如下：
@@ -10,10 +12,10 @@
 * 使用金山云容器镜像服务
 * 创建Kubernetes容器引擎
 * 部署Nginx应用
-* 部署Kubernetes仪表盘服务
+* 部署Kubernetes仪表盘
 
 
-# 1 网络环境
+# 1 准备网络环境
 本指南所使用的环境位于金山云北京6区。下面是在使用金山云容器引擎服务所需要准备的网络配置信息。
 
 ## 1.1 VPC配置信息
@@ -455,7 +457,7 @@ Accept-Ranges: bytes
 ![负载均衡实例信息](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/slb-listener.png)
 
 
-# 5 部署Kubernetes仪表盘服务
+# 5 部署Kubernetes仪表盘
 
 ## 5.1 创建Dashboard相关对象
 部署Kubernetes Dashboard通常基于github的指南，并推荐采用该yaml文件https://github.com/kubernetes/dashboard/blob/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml。
@@ -588,7 +590,7 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2V
 ![Dashboar登录](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/dashboard-main.png)
 
 # 6 小结
-本文介绍了如何利用金山云容器引擎服务管理容器镜像和Kubernetes集群，并部署一个简单的Nginx应用和标准仪表盘的过程。金山云容器引擎服务不仅仅简化Kubernetes集群的安装和管理，还可以和金山云其它IaaS（云主机、云硬盘、负载均衡等）和PaaS服务整合，为客户提供了高弹性、高安全、易管理并按量计费的应用支持平台。
+本文介绍了如何利用金山云容器引擎服务管理容器镜像和Kubernetes集群，并部署一个简单的Nginx应用和标准仪表盘的过程。金山云容器引擎服务不仅仅简化Kubernetes集群的安装和管理，还可以和金山云其它IaaS（云主机、云硬盘、负载均衡等）和PaaS服务整合，为客户提供了高弹性、高安全、易管理并按量计费的弹性应用支撑平台。
 
 # 7 参考资料
 * 金山云容器引擎产品介绍：https://www.ksyun.com/post/product/KCE
