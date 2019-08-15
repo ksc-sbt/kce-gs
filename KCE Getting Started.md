@@ -596,7 +596,7 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2V
 其中token字段后面的值就是访问Dashboard的Token。
 
 ## 5.3 通过浏览器访问Dashboard
-通过浏览器访问地址https://120.92.209.133/。在忽略一些安全告警信息后，进入如下界面：
+通过浏览器访问地址[https://120.92.209.133/](https://120.92.209.133/)。在忽略一些安全告警信息后，进入如下界面：
 
 ![Dashboar登录](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/dashboard-login.png)
 在"Enter token"处输入"5.2 获得访问Dashboard的Token"获得的Token信息，进入Dashboard界面。
