@@ -121,7 +121,7 @@ latest: digest: sha256:dc85890ba9763fe38b178b337d4ccc802874afe3c02e6c98c304f65b0
 ![金山云容器镜像仓库镜像信息](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/registry-repository.png)
  
 ## 2.3	进行镜像安全扫描
-金山云镜像仓库提供镜像安全扫码功能，通过选择特定的镜像版本，执行“安全扫描”操作，将获得该镜像的安全扫描结果。
+金山云镜像仓库提供镜像安全扫描功能，通过选择特定的镜像版本，执行“安全扫描”操作，将获得该镜像的安全扫描结果。
 ![金山云容器镜像安全扫描结果](https://raw.githubusercontent.com/ksc-sbt/kce-gs/master/images/image-security-scan.png)
  
 # 3 创建Kubernetes容器引擎实例
