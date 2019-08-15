@@ -550,7 +550,7 @@ metrics-server            ClusterIP      10.254.67.107    <none>           443/T
 monitoring-influxdb       ClusterIP      10.254.190.9     <none>           8086/TCP                  16h
 traefik-ingress-service   ClusterIP      10.254.208.103   <none>           80/TCP,443/TCP,8080/TCP   16h
 ```
-通过Service对象kubernetes-dashboard可获得Kubernetes Dashboard的访问地址是：https://120.92.209.133/。
+通过Service对象kubernetes-dashboard可获得Kubernetes Dashboard的访问地址是：[https://120.92.209.133/](https://120.92.209.133/)。
 
 ## 5.2 获得访问Dashboard的Token
 在创建Dashboard相关对象时，会创建一个类型为kubernetes.io/service-account-token的Secret。首先执行如下命令列出Secret。
